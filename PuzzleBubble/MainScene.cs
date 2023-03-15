@@ -17,7 +17,7 @@ namespace PuzzleBubble
 
         int[,] _gameTable;
 
-        Texture2D _bubble, _rect, _cannon;
+        Texture2D _bubble, _rect, _cannon, _shooter;
         SpriteFont _font;
 
         int _bubbleShootCount;
@@ -30,11 +30,16 @@ namespace PuzzleBubble
         Vector2 _bubblePos;
         float _moveSpeed;
         float _tick;
+        float _elapsedTime;
+        float _rotationShooter;
+        float _maxRotationShooter;
+        float _sign;
 
         enum GameState
         {
             PrepareShooting,
             Shooting,
+            Flying,
             GameEnded
         }
         GameState _currentGameState;
@@ -111,7 +116,7 @@ namespace PuzzleBubble
 
                     if (_bubbleShootCount > 0)
                     {
-                        _bubblePos = new Vector2(GAMEWIDTH / 2 + 175, GAMEHEIGHT - 50);
+                        //_bubblePos = new Vector2(GAMEWIDTH / 2 + 175, GAMEHEIGHT - 50);
                         _colorRnd = _nextColorRnd;
                         _nextColorRnd = ColorRandom();
                     }
@@ -127,6 +132,21 @@ namespace PuzzleBubble
                     }
                     break;
                 case GameState.Shooting:
+                    //rotate shooter 
+                    _elapsedTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    if (_elapsedTime > 0.05f)
+                    {
+                    if ((_currentKeyState.IsKeyDown(Keys.Left) || _currentKeyState.IsKeyDown(Keys.A)) && _rotationShooter > -_maxRotationShooter)
+                    {
+                        _rotationShooter -= 0.1f;
+                    }
+                    if ((_currentKeyState.IsKeyDown(Keys.Right) || _currentKeyState.IsKeyDown(Keys.D)) && _rotationShooter < _maxRotationShooter)
+                    {
+                        _rotationShooter += 0.1f;
+                    }
+                    _elapsedTime = 0f;
+                    }
+
                     //Shoot!
                     _currentMouseState = Mouse.GetState();
                     if ((_currentMouseState.LeftButton == ButtonState.Pressed &&
@@ -134,8 +154,28 @@ namespace PuzzleBubble
                         _currentKeyState.IsKeyDown(Keys.Space) && !_currentKeyState.Equals(_previouskeyState))
                     {
                         _bubbleShootCount++;
+                        _elapsedTime = 0;
+                        _currentGameState = GameState.Flying;
+                        //_currentGameState = GameState.PrepareShooting;
+                    }
+                    break;
+                case GameState.Flying:
+                    _elapsedTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    if (_elapsedTime > 0.01f)
+                    {
+                        if (_bubblePos.X >= 600 - 42 || _bubblePos.X <= 200 + 42)
+                        {
+                            _bubblePos.X *= -1;
+                        }
+                        Matrix m = Matrix.CreateRotationZ(_rotationShooter);
+                        _bubblePos.X += m.M12 * 1.5f;
+                        _bubblePos.Y -= m.M11 * 1.5f;
 
-                        _currentGameState = GameState.PrepareShooting;
+                        if (_bubblePos.Y < 100)
+                        {
+                            _currentGameState = GameState.PrepareShooting;
+                        }
+                        _elapsedTime = 0.0f;
                     }
                     break;
                 case GameState.GameEnded:
@@ -193,7 +233,7 @@ namespace PuzzleBubble
             _spriteBatch.Draw(_rect, new Vector2(200, -(GAMEHEIGHT - 100) + (_BUBBLESIZE * _ceilingDown)), null, Color.DimGray, 0f, Vector2.Zero, new Vector2(GAMEWIDTH, GAMEHEIGHT), SpriteEffects.None, 0f);
 
             //Cannon
-            _spriteBatch.Draw(_cannon, new Vector2(GAMEWIDTH / 2 + 160, GAMEHEIGHT - 100), null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
+            _spriteBatch.Draw(_cannon, new Vector2(GAMEWIDTH / 2 + 190, GAMEHEIGHT - 50), null, Color.White, _rotationShooter, new Vector2(_cannon.Width / 2, _cannon.Height / 2), 1f, SpriteEffects.None, 1);
 
             _spriteBatch.Draw(_bubble, _bubblePos, _colorRnd);
             _spriteBatch.Draw(_bubble, new Vector2(GAMEWIDTH / 2 + 75, GAMEHEIGHT - 50), _nextColorRnd);
@@ -203,6 +243,8 @@ namespace PuzzleBubble
                 case GameState.PrepareShooting:
                     break;
                 case GameState.Shooting:
+                    break;
+                case GameState.Flying:
                     break;
                 case GameState.GameEnded:
                     if (_lose)
@@ -232,9 +274,9 @@ namespace PuzzleBubble
 
             _gameTable = new int[11, 8]
             {
-                {0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0},
+                {1, 1, 3, 1, 2, 4, 1, 2},
+                {2, 2, 2, 1, 1, 4, 1, 2},
+                {2, 3, 1, 1, 2, 4, 2, 1},
                 {0, 0, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0, 0, 0},
@@ -256,6 +298,10 @@ namespace PuzzleBubble
 
             _currentGameState = GameState.PrepareShooting;
             _currentMouseState = Mouse.GetState();
+
+            _elapsedTime = 0.0f;
+            _rotationShooter = 0.0f;
+            _maxRotationShooter = 1.0f;
         }
 
         protected Color ColorRandom()
