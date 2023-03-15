@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
 
 namespace PuzzleBubble
 {
@@ -31,6 +32,9 @@ namespace PuzzleBubble
         float _moveSpeed;
         float _tick;
 
+        int _count;
+        List<Vector2> _deleteBubble;
+        
         enum GameState
         {
             PrepareShooting,
@@ -107,7 +111,19 @@ namespace PuzzleBubble
                         _ceilingDown++;
                     }
 
-                    
+                    //Checked nearby bubble color
+                    /*
+                    CheckedColorPop(); ค่าของลูกที่ยิงออกไป
+                    if (_count >= 3)
+                    {
+                        foreach (Vector2 sp in _deleteBubble)
+                        {
+                            _gameTable[(int)((sp.Y - 100) / _BUBBLESIZE), (int)((sp.X - 200) / _BUBBLESIZE)] = 0;
+                        }
+                    }
+                    _deleteBubble.Clear();
+                    _count = 1;
+                    */
 
                     if (_bubbleShootCount > 0)
                     {
@@ -251,8 +267,10 @@ namespace PuzzleBubble
             _lose = false;
             _win = false;
             _moveSpeed = 10f;
+            _count = 1;
 
             _bubblePos = new Vector2(GAMEWIDTH / 2 + 175, GAMEHEIGHT - 50);
+            _deleteBubble = new List<Vector2>();
 
             _currentGameState = GameState.PrepareShooting;
             _currentMouseState = Mouse.GetState();
@@ -303,6 +321,76 @@ namespace PuzzleBubble
                 }
             }
             return false;
+        }
+
+        protected void CheckedColorPop(Vector2 _checkPos)
+        {
+            _deleteBubble.Add(_checkPos);
+
+            //Left
+            if ((int)((_checkPos.X - 250) / _BUBBLESIZE) >= 0)
+            {
+                if (_gameTable[(int)((_checkPos.Y - 100) / _BUBBLESIZE), (int)((_checkPos.X - 200) / _BUBBLESIZE)] ==
+                    _gameTable[(int)((_checkPos.Y - 100) / _BUBBLESIZE), (int)((_checkPos.X - 250) / _BUBBLESIZE)])
+                {
+                    foreach (Vector2 v in _deleteBubble)
+                    {
+                        if (!(new Vector2(_checkPos.X - 50, _checkPos.Y).Equals(v)))
+                        {
+                            _count++;
+                            CheckedColorPop(new Vector2(_checkPos.X - 50, _checkPos.Y));
+                        }
+                    }
+                }
+            }
+            //Right
+            if ((int)((_checkPos.X - 150) / _BUBBLESIZE) < 8)
+            {
+                if (_gameTable[(int)((_checkPos.Y - 100) / _BUBBLESIZE), (int)((_checkPos.X - 200) / _BUBBLESIZE)] ==
+                    _gameTable[(int)((_checkPos.Y - 100) / _BUBBLESIZE), (int)((_checkPos.X - 150) / _BUBBLESIZE)])
+                {
+                    foreach (Vector2 v in _deleteBubble)
+                    {
+                        if (!(new Vector2(_checkPos.X + 50, _checkPos.Y).Equals(v)))
+                        {
+                            _count++;
+                            CheckedColorPop(new Vector2(_checkPos.X + 50, _checkPos.Y));
+                        }
+                    }
+                }
+            }
+            //Up
+            if ((int)((_checkPos.Y - 150) / _BUBBLESIZE) >= 0)
+            {
+                if (_gameTable[(int)((_checkPos.Y - 100) / _BUBBLESIZE), (int)((_checkPos.X - 200) / _BUBBLESIZE)] ==
+                    _gameTable[(int)((_checkPos.Y - 150) / _BUBBLESIZE), (int)((_checkPos.X - 200) / _BUBBLESIZE)])
+                {
+                    foreach (Vector2 v in _deleteBubble)
+                    {
+                        if (!(new Vector2(_checkPos.X, _checkPos.Y - 50).Equals(v)))
+                        {
+                            _count++;
+                            CheckedColorPop(new Vector2(_checkPos.X, _checkPos.Y - 50));
+                        }
+                    }
+                }
+            }
+            //Down
+            if ((int)((_checkPos.Y - 50) / _BUBBLESIZE) < 11)
+            {
+                if (_gameTable[(int)((_checkPos.Y - 100) / _BUBBLESIZE), (int)((_checkPos.X - 200) / _BUBBLESIZE)] ==
+                    _gameTable[(int)((_checkPos.Y - 50) / _BUBBLESIZE), (int)((_checkPos.X - 200) / _BUBBLESIZE)])
+                {
+                    foreach (Vector2 v in _deleteBubble)
+                    {
+                        if (!(new Vector2(_checkPos.X, _checkPos.Y + 50).Equals(v)))
+                        {
+                            _count++;
+                            CheckedColorPop(new Vector2(_checkPos.X, _checkPos.Y + 50));
+                        }
+                    }
+                }
+            }
         }
     }
 }
