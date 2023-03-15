@@ -30,6 +30,8 @@ namespace PuzzleBubble
         Vector2 _bubblePos;
         float _moveSpeed;
         float _tick;
+        float _elapsedTime;
+        float _rotationShooter;
 
         enum GameState
         {
@@ -86,6 +88,22 @@ namespace PuzzleBubble
             switch (_currentGameState)
             {
                 case GameState.PrepareShooting:
+
+                    // shooter move
+                    _elapsedTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    if (_elapsedTime > 0.05f)
+                    {
+                        if (_currentKeyState.IsKeyDown(Keys.Left) && _currentKeyState != _previouskeyState)
+                        {
+                            _rotationShooter -= 0.1f;
+                        }
+                        if (_currentKeyState.IsKeyDown(Keys.Right) && _currentKeyState != _previouskeyState)
+                        {
+                            _rotationShooter += 0.1f;
+                        }
+                        _elapsedTime = 0f;
+                    }
+
                     //Ceiling Dropping
                     if (_bubbleShootCount % 3 == 0 && _bubbleShootCount != 0)
                     {
@@ -165,6 +183,9 @@ namespace PuzzleBubble
 
             ///Line
             _spriteBatch.Draw(_rect, new Vector2(200, GAMEHEIGHT - 100), null, Color.Brown, 0f, Vector2.Zero, new Vector2(GAMEWIDTH, 5), SpriteEffects.None, 0f);
+
+            //shooter
+            _spriteBatch.Draw(launcher, ubicacionPuntero, null, Color.White, _rotationShooter, new Vector2(launcher.Width / 2, launcher.Height / 2), 1f, SpriteEffects.None, 1);
 
             //Bubble
             for (int i = 0; i < 11; i++)
